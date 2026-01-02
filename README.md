@@ -12,6 +12,9 @@
 | **Télémétrie** | Sysmon (SwiftOnSecurity) | Journalisation avancée |
 | **Transport** | Universal Forwarder | Expédition des journaux |
 
+> [!WARNING]
+> Dans cette architecture, la machine physique joue le rôle de la machine de la victime. **Cela ne doit jamais être le choix privilégié dans une situation normale.** Dans mon cas pour des soucis de compatibilité, j'ai toutefois été contraint d'utiliser la machine physique comme machine victime.
+
 ---
 **Schéma de flux :**
 [Windows 11 + Sysmon + UF] ---(Port 9997)---> [Windows Server 2022 + Splunk Enterprise]
@@ -33,12 +36,9 @@ cd C:\Sysmon
 ```
 
 Processus de validation :
-Les événements Sysmon sont visibles dans l'Observateur d'événements Windows :
-Journaux des applications et des services > Microsoft > Windows > Sysmon > Operational. 
-> [!NOTE]
-> Sysmon a bien été installé et est fonctionnel!
-
 ![Sysmon installé](images/sysmoninstallé1.png)
 
 > *Installation réussie de Sysmon v15.15. Le service est actif et les logs sont visibles dans l'Observateur d'événements Windows sous `Microsoft-Windows-Sysmon/Operational`.*
 
+> [!NOTE]
+> Sysmon a bien été installé et est fonctionnel !
