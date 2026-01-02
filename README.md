@@ -30,8 +30,15 @@ Expand-Archive Sysmon.zip -DestinationPath C:\Sysmon
 # Installation avec configuration SwiftOnSecurity
 cd C:\Sysmon
 .\Sysmon64.exe -i sysmonconfig-export.xml -accepteula
+```
 
-Validation :
+Processus de validation :
 Les événements Sysmon sont visibles dans l'Observateur d'événements Windows :
-Applications and Services Logs > Microsoft > Windows > Sysmon > Operational
+Journaux des applications et des services > Microsoft > Windows > Sysmon > Operational. 
+> [!NOTE]
+> Sysmon a bien été installé et est fonctionnel!
 
+<figure align="center">
+  <img src="images/sysmoninstallé1.png" alt="Sysmon installé" width="700"/>
+  <figcaption><i>Installation réussie de Sysmon avec configuration SwiftOnSecurity</i></figcaption>
+</figure>
