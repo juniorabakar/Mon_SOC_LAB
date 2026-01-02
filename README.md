@@ -12,7 +12,7 @@
 | **Télémétrie** | Sysmon (SwiftOnSecurity) | Journalisation avancée |
 | **Transport** | Universal Forwarder | Expédition des journaux |
 
-> [!WARNING]
+> [!ATTENTION]
 > Dans cette architecture, la machine physique joue le rôle de la machine de la victime. **Cela ne doit jamais être le choix privilégié dans une situation normale.** Dans mon cas pour des soucis de compatibilité, j'ai toutefois été contraint d'utiliser la machine physique comme machine victime.
 
 ---
