@@ -25,8 +25,11 @@
 ### Étape 1 : Déploiement de Sysmon (Endpoint)
 Sysmon a été installé sur la machine Windows 11 avec la configuration communautaire de référence (SwiftOnSecurity) pour maximiser la visibilité sur les activités critiques.
 
+> [!IMPORTANT]
+> N'oubliez pas de télécharger le fichier https://github.com/SwiftOnSecurity/sysmon-config/blob/master/sysmonconfig-export.xml .
+
 ```powershell
-# Téléchargement de Sysmon et de la config
+# Téléchargement de Sysmon et de la config sysmonconfig-export.xml.
 Invoke-WebRequest -Uri https://download.sysinternals.com/files/Sysmon.zip -OutFile Sysmon.zip
 Expand-Archive Sysmon.zip -DestinationPath C:\Sysmon
 
