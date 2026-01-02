@@ -4,7 +4,7 @@
 
 > **Résumé :** Un laboratoire de détection complet simulant les techniques MITRE ATT&CK (T1547) et concevant des règles de détection à l'aide de Splunk Enterprise et Sysmon.
 
-## 🏗️ Architecture
+## Architecture
 | Composant | Technologie | Rôle |
 |-----------|------------|------|
 | **SIEM** | Splunk Enterprise | Agrégation et analyse des journaux |
@@ -17,7 +17,7 @@
 [Windows 11 + Sysmon + UF] ---(Port 9997)---> [Windows Server 2022 + Splunk Enterprise]
 
 ---
-## ⚙️ Installation et Configuration
+## Installation et Configuration
 
 ### Étape 1 : Déploiement de Sysmon (Endpoint)
 Sysmon a été installé sur la machine Windows 11 avec la configuration communautaire de référence (SwiftOnSecurity) pour maximiser la visibilité sur les activités critiques.
@@ -38,7 +38,7 @@ Journaux des applications et des services > Microsoft > Windows > Sysmon > Opera
 > [!NOTE]
 > Sysmon a bien été installé et est fonctionnel!
 
-<figure align="center">
-  <img src="images/sysmoninstallé1.png" alt="Sysmon installé" width="700"/>
-  <figcaption><i>Installation réussie de Sysmon avec configuration SwiftOnSecurity</i></figcaption>
-</figure>
+![Sysmon installé](images/sysmoninstallé1.png)
+
+> *Installation réussie de Sysmon v15.15. Le service est actif et les logs sont visibles dans l'Observateur d'événements Windows sous `Microsoft-Windows-Sysmon/Operational`.*
+
