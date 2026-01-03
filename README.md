@@ -215,7 +215,7 @@ renderXml = 1
 Sur le serveur Windows Server 2022, Splunk a été configuré pour accepter les connexions entrantes des Forwarders.
 
 Vous pouvez configurer la réception via l'interface web de Splunk Enterprise :
-Settings > Forwarding and receiving > Configure receiving
+Paramètres > Transfert et réception > Configurer la réception
 
 Ajout du port 9997 pour correspondre aux instructions ci-dessus.
 
