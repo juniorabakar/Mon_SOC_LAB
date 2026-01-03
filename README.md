@@ -52,7 +52,7 @@ cd C:\Sysmon
 
 L'Universal Forwarder (UF) a été configuré pour capturer les logs Sysmon et les transmettre au serveur Splunk via TCP/9997.
 
-**Fichier :** `C:\Program Files\SplunkUniversalForwarder\etc\system\local\inputs.conf` par défaut. Je vous ai préparé un template:
+**Fichier :** `C:\Program Files\SplunkUniversalForwarder\etc\system\local\inputs.conf` par défaut. Voici un template dont vous pourrez vous servir:
 
 ```ini
 # ============================================
