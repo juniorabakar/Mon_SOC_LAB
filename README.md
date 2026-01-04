@@ -19,6 +19,30 @@
 **Schéma de flux :**
 [Windows 11 + Sysmon + UF] ---(Port 9997)---> [Windows Server 2022 + Splunk Enterprise]
 
+### 📚 Prérequis : Installation de l'Infrastructure
+Avant de configurer la collecte, Splunk Enterprise et l'Universal Forwarder doivent être installés. Voici les tutoriels que j'ai personnellement utilisés:
+
+1. 📺 **[Installation de Splunk Enterprise sur Windows](https://www.youtube.com/watch?v=kESCizBHhtM)** (Serveur)
+2. 📺 **[Installation de l'Universal Forwarder sur Windows](https://www.youtube.com/watch?v=wd4BLsJThQY)** (Victime)
+
+> *Note : Les interfaces peuvent varier légèrement selon les versions, mais le principe reste identique.*
+
+**⚠️ Modifications OBLIGATOIRES pour ce Lab :**
+
+Lors de l'installation de l'Universal Forwarder sur la machine victime :
+
+1. **Receiving Indexer (Indexeur de réception) :**
+   - **IP :** Entrez l'adresse IP de votre serveur Splunk (ex: `192.168.1.50`).
+     *(Si tout est sur la même machine, mettez `127.0.0.1`)*.
+   - **Port :** `9997` (Port par défaut).
+
+2. **Compte de service :**
+   - Sélectionnez **Local System** pour garantir que l'agent ait les droits suffisants pour lire les journaux de Sécurité et Système.
+
+3. **Logs par défaut :**
+   - **Décochez tout** dans l'installateur (Application, Security, System).
+   - *Nous allons configurer cela manuellement et plus proprement via le fichier `inputs.conf` à l'Étape 2.*
+
 ---
 ## Installation et Configuration
 
@@ -53,168 +77,28 @@ cd C:\Sysmon
 L'Universal Forwarder (UF) a été configuré pour capturer les logs Sysmon et les transmettre au serveur Splunk via TCP/9997.
 
 **Fichier :** `C:\Program Files\SplunkUniversalForwarder\etc\system\local\inputs.conf` par défaut. Voici un template dont vous pourrez vous servir:
+**[Télécharger le template complet ici](config/Template_inputs.conf)**
+ 
+### Étape 3 : Configuration des Index sur Splunk Enterprise
+>[!NOTE]
+> Avant de recevoir les logs, les index définis dans la configuration de l'UF doivent être créés sur le serveur Splunk.**Sans cela, Splunk rejettera les données entrantes.**
+> Créons donc ces fameux index.
 
-```ini
-# ============================================
-# FICHIER : inputs.conf
-# ============================================
-# Description : Configuration de l'Universal Forwarder pour la collecte
-#               des journaux Windows et Sysmon vers le serveur Splunk.
-# Contexte    : Lab Blue Team / Formation SOC Analyst
-# Serveur     : <IP_SERVEUR_SPLUNK>:9997 (voir outputs.conf)
-# Date        : <DATE_CONFIGURATION>
-# Auteur      : <VOTRE_NOM>
-# ============================================
-#
-# INSTRUCTIONS :
-#
-# 1. Remplacez les valeurs suivantes selon votre environnement :
-#    - <NOM_MACHINE>        : Nom de votre machine Windows (ex: WIN10-LAB-01)
-#    - <INDEX_SYSMON>       : Nom de l'index Splunk pour Sysmon (ex: sysmon)
-#    - <INDEX_SECURITY>     : Nom de l'index pour Security (ex: windows_security)
-#    - <INDEX_SYSTEM>       : Nom de l'index pour System (ex: windows_system)
-#    - <INDEX_APPLICATION>  : Nom de l'index pour Application (ex: windows_app)
-#
-# 2. Ajustez les whitelists/blacklists selon vos besoins :
-#    - Sysmon : Event IDs critiques pour votre cas d'usage
-#    - Security : Événements d'authentification et de gestion des comptes
-#    - System/Application : Filtrez les Event IDs générant trop de bruit
-#
-# 3. Vérifiez que les index existent côté Splunk Indexer/Search Head
-#    (Configuration > Indexes)
-#
-# 4. Après modification, redémarrez le Forwarder :
-#    net stop SplunkForwarder && net start SplunkForwarder
-#
-# 5. Validez la configuration avec :
-#    "%PROGRAMFILES%\SplunkUniversalForwarder\bin\splunk.exe" btool inputs list --debug
-#
-# AVERTISSEMENT :
-# Cette configuration est optimisée pour un environnement de test/lab.
-# Pour une utilisation en production, consultez votre équipe sécurité.
-#
-# ============================================
+**Index à créer :**
+- `sysmon`
+- `windows_security`
+- `windows_system`
+- `windows_app`
 
-[default]
-# Remplacez par le nom de votre machine
-host = <NOM_MACHINE>
+![Indexes](images/Indexes_créés.png)
+
+>[!NOTE]
+> A ce stade, index=main source="*Sysmon*" devrait vous retourner un résultat non vide sur Splunk après quelques minutes.
 
 
-# ============================================
-# SURVEILLANCE CRITIQUE : Logs Sysmon
-# ============================================
-# Le journal Sysmon fournit une visibilité détaillée sur :
-# - la création de processus, les connexions réseau, les modifications de registre
-# - les événements d'injection de code et de persistence
+Sur le serveur Windows Server 2022, Splunk doit être configuré pour accepter les connexions entrantes des Forwarders.
 
-[WinEventLog://Microsoft-Windows-Sysmon/Operational]
-# Active la collecte (0 = activé, 1 = désactivé)
-disabled = 0
-
-# Index dédié pour séparer les logs Sysmon des autres sources Windows
-index = <INDEX_SYSMON>
-
-# Sourcetype explicite pour faciliter le parsing et les extractions de champs
-sourcetype = XmlWinEventLog:Microsoft-Windows-Sysmon/Operational
-
-# Format XML brut pour préserver la structure hiérarchique complète
-renderXml = 1
-
-# Fréquence de sauvegarde de la position de lecture (en secondes)
-# Valeur basse = reprise plus précise après redémarrage mais plus d'I/O disque
-checkpointInterval = 5
-
-# Whitelist des Event IDs critiques pour limiter le volume de données
-# Event ID 1  : Process Creation          | Event ID 3  : Network Connection
-# Event ID 7  : Image Loaded (DLL)        | Event ID 8  : CreateRemoteThread
-# Event ID 10 : Process Access (Mimikatz) | Event ID 11 : File Creation
-# Event ID 13 : Registry Value Set        | Event ID 17 : Pipe Created
-# Event ID 18 : Pipe Connected            | Event ID 19 : WMI Event Filter
-# Event ID 20 : WMI Event Consumer        | Event ID 21 : WMI Filter-Consumer Binding
-# Event ID 22 : DNS Query
-# AJUSTEZ SELON VOS BESOINS (retirer la whitelist = tout collecter, ce qui augmentera drastiquement le volume)
-whitelist = 1,3,7,8,10,11,13,17,18,19,20,21,22
-
-
-# ============================================
-# SURVEILLANCE SÉCURITÉ : Events Windows
-# ============================================
-# Le journal Security contient les événements d'authentification,
-# de gestion des comptes, et de modification des groupes.
-
-[WinEventLog://Security]
-disabled = 0
-
-index = <INDEX_SECURITY>
-
-sourcetype = WinEventLog:Security
-renderXml = 1
-
-# Whitelist des Event IDs critiques pour la détection d'intrusions
-# 4624 : Logon réussi              | 4625 : Logon échoué
-# 4648 : Logon explicite (RunAs)   | 4672 : Logon avec privilèges admin
-# 4688 : Création de processus     | 4697 : Installation de service
-# 4698 : Tâche planifiée créée     | 4720 : Compte utilisateur créé
-# 4722 : Compte utilisateur activé | 4732/4733 : Modification groupe local
-# 4756 : Modification groupe global
-# AJUSTEZ SELON VOS BESOINS
-whitelist = 4624,4625,4648,4672,4688,4697,4698,4720,4722,4732,4733,4756
-
-
-# ============================================
-# SURVEILLANCE SYSTÈME : Events Windows
-# ============================================
-# Le journal System contient les événements du noyau, des drivers,
-# des services Windows, et du client DNS.
-
-[WinEventLog://System]
-disabled = 0
-
-index = <INDEX_SYSTEM>
-
-sourcetype = WinEventLog:System
-renderXml = 1
-
-# Blacklist des Event IDs générant du bruit (à ajuster selon l'environnement)
-# 1014 : Événements DNS client (très fréquents)
-# 1030 : Événements Group Policy peu pertinents en lab
-# ⚙️ AJUSTEZ SELON VOS BESOINS (commenter la ligne = tout collecter)
-blacklist = 1014,1030
-
-
-# ============================================
-# SURVEILLANCE APPLICATION : Events Windows
-# ============================================
-# Le journal Application contient les événements des applications tierces
-# (antivirus, applications métier, etc.).
-
-[WinEventLog://Application]
-disabled = 0
-
-index = <INDEX_APPLICATION>
-
-sourcetype = WinEventLog:Application
-renderXml = 1
-
-
-# ============================================
-# FIN DU FICHIER inputs.conf
-# ============================================
-# Pour valider la configuration :
-#   1. Vérifier la syntaxe :
-#      "%PROGRAMFILES%\SplunkUniversalForwarder\bin\splunk.exe" btool inputs list --debug
-#
-#   2. Redémarrer le service :
-#      net stop SplunkForwarder && net start SplunkForwarder
-#
-#   3. Vérifier la réception des logs dans Splunk :
-#      index=<INDEX_SYSMON> earliest=-15m | stats count by host, sourcetype
-# ============================================
-```
-### Étape 3 : Configuration de Splunk Enterprise
-Sur le serveur Windows Server 2022, Splunk a été configuré pour accepter les connexions entrantes des Forwarders.
-
-Vous pouvez configurer la réception via l'interface web de Splunk Enterprise :
+Vous pouvez configurer de votre côté la réception via l'interface web de Splunk Enterprise :
 Paramètres > Transfert et réception > Configurer la réception
 
 Ajout du port 9997 pour correspondre aux instructions ci-dessus.
@@ -222,7 +106,6 @@ Ajout du port 9997 pour correspondre aux instructions ci-dessus.
 ![Port de réception 9997 ouvert](images/portouvert.png)
 
 
-**Validation de la réception des logs** : index=main source="*Sysmon*" devrait vous retourner un résultat non vide sur Splunk
 
 ![Réception validée](images/repvalide.png)
 Règle Pare-feu Windows Server :
