@@ -32,8 +32,7 @@ Avant de configurer la collecte, Splunk Enterprise et l'Universal Forwarder doiv
 Lors de l'installation de l'Universal Forwarder sur la machine victime :
 
 1. **Receiving Indexer (Indexeur de réception) :**
-   - **IP :** Entrez l'adresse IP de votre serveur Splunk (ex: `192.168.1.50`).
-     *(Si tout est sur la même machine, mettez `127.0.0.1`)*.
+   - **IP :** Entrez l'adresse IP de votre serveur Splunk, celle avec votre Splunk Universal Forwarder, compatible avec toutes les machines modernes. 
    - **Port :** `9997` (Port par défaut).
 
 2. **Compte de service :**
