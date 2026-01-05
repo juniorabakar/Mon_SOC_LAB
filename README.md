@@ -22,8 +22,8 @@
 ### 📚 Prérequis : Installation de l'Infrastructure
 Avant de configurer la collecte, Splunk Enterprise et l'Universal Forwarder doivent être installés. Voici les tutoriels que j'ai personnellement utilisés:
 
-1. 📺 **[Installation de Splunk Enterprise sur Windows](https://www.youtube.com/watch?v=kESCizBHhtM)** (Serveur)
-2. 📺 **[Installation de l'Universal Forwarder sur Windows](https://www.youtube.com/watch?v=wd4BLsJThQY)** (Victime)
+1.  **[Installation de Splunk Enterprise sur Windows](https://www.youtube.com/watch?v=kESCizBHhtM)** (Serveur)
+2.  **[Installation de l'Universal Forwarder sur Windows](https://www.youtube.com/watch?v=wd4BLsJThQY)** (Victime)
 
 > *Note : Les interfaces peuvent varier légèrement selon les versions, mais le principe reste identique.*
 
@@ -32,7 +32,7 @@ Avant de configurer la collecte, Splunk Enterprise et l'Universal Forwarder doiv
 Lors de l'installation de l'Universal Forwarder sur la machine victime :
 
 1. **Receiving Indexer (Indexeur de réception) :**
-   - **IP :** Entrez l'adresse IP de votre serveur Splunk, celle avec votre Splunk Universal Forwarder, compatible avec toutes les machines modernes. 
+   - **IP :** Entrez l'adresse IP de votre Serveur Splunk Enterprise (Destination).
    - **Port :** `9997` (Port par défaut).
 
 2. **Compte de service :**
@@ -75,40 +75,60 @@ cd C:\Sysmon
 
 L'Universal Forwarder (UF) a été configuré pour capturer les logs Sysmon et les transmettre au serveur Splunk via TCP/9997.
 
-**Fichier :** `C:\Program Files\SplunkUniversalForwarder\etc\system\local\inputs.conf` par défaut. Voici un template dont vous pourrez vous servir:
+**Fichier :**  `C:\Program Files\SplunkUniversalForwarder\etc\system\local\inputs.conf` (À créer s'il n'existe pas). Voici un template dont vous pourrez vous servir:
 **[Télécharger le template complet ici](config/Template_inputs.conf)**
  
 ### Étape 3 : Configuration des Index sur Splunk Enterprise
->[!NOTE]
-> Avant de recevoir les logs, les index définis dans la configuration de l'UF doivent être créés sur le serveur Splunk.**Sans cela, Splunk rejettera les données entrantes.**
-> Créons donc ces fameux index.
-
-**Index à créer :**
-- `sysmon`
-- `windows_security`
-- `windows_system`
-- `windows_app`
-
-![Indexes](images/Indexes_créés.png)
-
->[!NOTE]
-> A ce stade, index=main source="*Sysmon*" devrait vous retourner un résultat non vide sur Splunk après quelques minutes.
-
 
 Sur le serveur Windows Server 2022, Splunk doit être configuré pour accepter les connexions entrantes des Forwarders.
 
 Vous pouvez configurer de votre côté la réception via l'interface web de Splunk Enterprise :
 Paramètres > Transfert et réception > Configurer la réception
 
-Ajout du port 9997 pour correspondre aux instructions ci-dessus.
+Ajout du port 9997 pour correspondre aux instructions ci-dessus:
 
 ![Port de réception 9997 ouvert](images/portouvert.png)
 
-
-
-![Réception validée](images/repvalide.png)
-Règle Pare-feu Windows Server :
+Maintenant que l'ouverture logicielle est effectuée, on peut passer à l'ouverture du réseau toujours sur le serveur Windows Server 2022: 
 
 ```powershell
 New-NetFirewallRule -DisplayName "Splunk Receiver" -Direction Inbound -Protocol TCP -LocalPort 9997 -Action Allow
 ```
+
+
+Une fois la règle pare-feu activée sur le serveur, validez immédiatement que le flux est ouvert depuis la machine **Victime** :
+```powershell
+ Test-NetConnection -ComputerName ADRESSEDEVOTRESERVEUR -Port 9997
+```
+
+**Résultat attendu :** `TcpTestSucceeded : True`.
+*Si ce test échoue, inutile d'aller plus loin : vérifiez l'IP et le Pare-feu.*
+
+>[!NOTE]
+> Avant de recevoir les logs, les index définis dans la configuration de l'UF doivent être créés sur le serveur Splunk.**Sans cela, Splunk rejettera les données entrantes.**
+
+Pour créer des indexes, il vous faut aller sur Splunk Enterprise puis aller dans Paramètres > Données > Index > Nouveau index. Vous pouvez tout laisser par défaut.
+
+**Index à créer :**
+- `sysmon`
+- `windows_security`
+- `windows_system`
+- `windows_app`
+  
+**Attention, ces indexes sont les mêmes que ceux indiqués dans votre fichier de configuration inputs.conf**
+  
+![Indexes](images/Indexes_créés.png)
+
+
+
+>[!NOTE]
+> A ce stade, "index=sysmon" devrait vous retourner un résultat non vide sur Splunk Entreprise après quelques minutes. Si ce n'est pas le cas, vérifiez les logs de splunkd dans le répertoire par défaut est **"C:\Program Files\SplunkUniversalForwarder\var\log\splunk\splunkd.log"** sur la machine avec l'Universal Forwarder pour débugguer. Dans mon cas, le **code d'erreur associé était le 5**, indiquant un manque de permission. La commande **C:\Windows\System32>wevtutil sl Microsoft-Windows-Sysmon/Operational /ca:O:BAG:SYD:(A;;0xf0007;;;SY)(A;;0x7;;;BA)(A;;0x7;;;SO)(A;;0x7;;;IU)(A;;0x7;;;SU)(A;;0x7;;;S-1-5-3-1024-1065365936-1281604716-3511738428-1654721687-9514)** sur l'invite de commande en mode administrateur m'a donc permis d'y remédier. **N'oubliez pas de redémarrer le service SplunkForwarder!**
+>![Résultat non vide](images/Vérif_Sysmon_Splunk.png)
+
+---
+## Simulation d'Attaque et Détection (MITRE T1547)
+
+>[!IMPORTANT]
+> Le choix de la technique d'attaque n'est pas anodin pour mon premier Lab SOC. 
+> J'ai choisi la technique [T1547.001 (Registry Run Keys)](https://attack.mitre.org/techniques/T1547/001/) car elle représente **un mécanisme de persistance fondamental** utilisé par une majorité de **malwares (APT, Ransomwares) pour survivre aux redémarrages**. De plus, elle permet de démontrer **la supériorité de la télémétrie Sysmon (Event ID 11 & 13) par rapport aux journaux Windows standards** pour l'attribution de l'action.
+
