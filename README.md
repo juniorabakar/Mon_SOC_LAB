@@ -126,9 +126,88 @@ Pour créer des indexes, il vous faut aller sur Splunk Enterprise puis aller dan
 >![Résultat non vide](images/Vérif_Sysmon_Splunk.png)
 
 ---
-## Simulation d'Attaque et Détection (MITRE T1547)
+## Simulation d'Attaque et Détection (MITRE T1547.001)
+>[!WARNING]
+> **DISCLAIMER IMPORTANT**
+> 
+> Les commandes et techniques décrites dans ce lab **modifient réellement votre système Windows (registre, système de fichiers)**.
+> 
+> **Ce lab est conçu pour un environnement d'apprentissage contrôlé** (machine virtuelle isolée). 
+>
+> **Avant d'exécuter une commande :**
+> 1. **Comprenez exactement ce qu'elle fait** – lisez chaque paramètre et chemin.
+> 2. **N'exécutez que dans un environnement de lab isolé** (machine virtuelle sans accès réseau ou segment de test).
+> 3. **Sauvegardez vos données importantes** avant de commencer.
+> 4. **Nettoyez toujours après** – les scripts de nettoyage sont fournis à la fin de chaque section.
+> 
+> Bien que j'ai prévu des commandes vers la fin afin de ramener l'ordinateur dans un état initial, ces techniques pourraient rendre votre système instable si mal appliquées. **Utilisez-les exclusivement dans un contexte contrôlé.**
+
 
 >[!IMPORTANT]
-> Le choix de la technique d'attaque n'est pas anodin pour mon premier Lab SOC. 
-> J'ai choisi la technique [T1547.001 (Registry Run Keys)](https://attack.mitre.org/techniques/T1547/001/) car elle représente **un mécanisme de persistance fondamental** utilisé par une majorité de **malwares (APT, Ransomwares) pour survivre aux redémarrages**. De plus, elle permet de démontrer **la supériorité de la télémétrie Sysmon (Event ID 11 & 13) par rapport aux journaux Windows standards** pour l'attribution de l'action.
+> Le choix de la technique d'attaque n'est pas anodin pour mon premier lab SOC.
+> J'ai choisi la technique [T1547.001 (Registry Run Keys / Startup Folder)](https://attack.mitre.org/techniques/T1547/001/) car elle représente **un mécanisme de persistance fondamental** : un programme est ajouté aux clés de registre ou aux dossiers de démarrage afin d'être exécuté automatiquement à chaque ouverture de session.
+> Cette technique est largement utilisée par des malwares (APT, trojans, ransomwares) pour **survivre aux redémarrages** et revenir après un simple reboot.
+> Elle permet également de démontrer **la valeur ajoutée de la télémétrie Sysmon (Event ID 11 & 13) par rapport aux journaux Windows standards**, notamment pour attribuer précisément :
+> - quel processus a créé ou modifié la clé/dossier de persistance ;
+> - sur quel chemin et pour quel binaire malveillant.
 
+Nous allons simuler deux vecteurs d'attaque classiques basés sur T1547.001 :
+- [Attaque A : Modification directe d'une clé Run du registre](#attaque-a--persistance-via-clé-de-registre-run) (la technique la plus classique).
+- [Attaque B : Création d'un fichier malveillant dans le dossier Startup](#attaque-b--persistance-via-dossier-startup) (alternative directe).
+
+---
+
+### Phase 1 – Simulation de l'attaque (Red Team)
+
+#### Contexte
+
+L'attaquant a compromis la machine victime et cherche à assurer sa **persistance**! Pour ce faire, il veut que son programme malveillant redémarre automatiquement à chaque démarrage de Windows, même après un reboot ou une reconnexion de l'utilisateur.
+
+#### Attaque A : Persistance via clé de registre Run
+Ici, l'attaquant cherche à simuler une persistance via clé de registre "Run". Il ouvre donc Powershell en mode administrateur et y rentre la commande suivante afin d'ajouter une entrée dans le registre HKCU\...\Run :
+```powershell
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Run" /v "MyBackdoor" /t REG_SZ /d "C:\Windows\System32\calc.exe" /f
+```
+<img width="1099" height="101" alt="image" src="https://github.com/user-attachments/assets/70f4d8b9-dabd-4dd4-8306-b03ebcdc960c" />
+
+> **Note :** Comme on peut le voir sur l'image, **l'opération s'est déroulée correctement.**
+
+Que fait réellement cette commande? Elle crée ne nouvelle valeur `MyBackdoor`,  pointant vers `C:\Windows\System32\calc.exe` dans la clé `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`. **À chaque démarrage/reconnexion, Windows exécutera automatiquement ce binaire pour l'utilisateur actuel**.
+
+
+> **Note :** En production, un attaquant pointerait vers un backdoor ou un RAT (Remote Access Trojan) au lieu de calc.exe.
+
+#### Attaque B : Persistance via dossier Startup
+L'attaquant cherche toujours à simuler une persistance après la compromission. Cependant, dans ce cas-ci, il le fait via le dossier de démarrage de l'utilisateur en créant un fichier batch dans le dossier Startup
+qui s'exécutera automatiquement à chaque reconnexion de l'utilisateur :
+
+```powershell
+$Path = "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Startup\malicious.bat"
+Set-Content -Path $Path -Value "start notepad.exe"
+```
+<img width="1099" height="113" alt="image" src="https://github.com/user-attachments/assets/4415310a-22b0-4175-a0d0-c7315d98c9c7" />
+
+> **Note :** Ici le fait qu'il n'y ait pas de message nous indique un succès de la commande.
+Que fait réellement cette commande? Elle crée un fichier `malicious.bat` dans le dossier Startup personnel. Ce fichier contient une commande qui lance notepad.exe, et qui sera exécuté automatiquement à chaque ouverture de session de cet utilisateur.
+
+> **Note :** Dans ce lab, nous avons utilisé `notepad.exe` à titre de démonstration ; un attaquant utiliserait une charge utile malveillante (malware, stealer, etc.).
+
+
+#### Machine compromise (état après les deux attaques)
+Félicitations! À ce stade, votre machine est "contaminée"! . Au prochain redémarrage ou à la prochaine reconnexion, vous verrez automatiquement :
+- La **calculatrice** s'ouvrir (Attaque A).
+- Le **bloc-notes** s'ouvrir (Attaque B).
+
+> **Attendez quelques secondes** avant de passer à la Phase 2 pour que l'Universal Forwarder envoie les logs Sysmon vers Splunk Enterprise.
+
+
+### Phase 2 – Détection et investigation dans Splunk (Blue Team)
+
+#### Contexte
+J'endosse maintenant le rôle d'analyste SOC. Les attaques ont eu lieu sur la machine Windows 11. Les données arrivent dans Splunk via Sysmon (Universal Forwarder). Nous allons maintenant **détecter et analyser** ces deux tentatives de persistance.
+
+#### Requête 1 : Détecter la modification de clé Run (Attaque A)
+On ouvre maintenant Splunk Enterprise et **on lance cette recherche** (période : `Last 15 minutes`) :
+```spl
+index=sysmon EventCode=13 TargetObject="*\\CurrentVersion\\Run\\*"
+```
