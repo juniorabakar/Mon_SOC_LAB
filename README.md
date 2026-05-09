@@ -26,7 +26,7 @@
 **Schéma de flux :**
 [Windows 11 + Sysmon + UF] ---(Port 9997)---> [Windows Server 2022 + Splunk Enterprise]
 
-### 📚 Prérequis : Installation de l'Infrastructure
+### Prérequis : Installation de l'Infrastructure
 Avant de configurer la collecte, Splunk Enterprise et l'Universal Forwarder doivent être installés. Voici les tutoriels que j'ai personnellement utilisés:
 
 1.  **[Installation de Splunk Enterprise sur Windows](https://www.youtube.com/watch?v=kESCizBHhtM)** (Serveur)
@@ -34,7 +34,7 @@ Avant de configurer la collecte, Splunk Enterprise et l'Universal Forwarder doiv
 
 > *Note : Les interfaces peuvent varier légèrement selon les versions, mais le principe reste identique.*
 
-**⚠️ Modifications OBLIGATOIRES pour ce Lab :**
+**Modifications OBLIGATOIRES pour ce Lab :**
 
 Lors de l'installation de l'Universal Forwarder sur la machine victime :
 
