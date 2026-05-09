@@ -2,7 +2,7 @@
 
 ![Bannière](images/Monimage1.png)
 
-> **Résumé :** Un laboratoire de détection complet simulant les techniques MITRE ATT&CK (T1547) et concevant des règles de détection à l'aide de Splunk Enterprise et Sysmon.
+> **Résumé :** Un laboratoire de détection complet simulant les techniques MITRE ATT&CK (T1547) et concevant des règles de détection à l'aide de Splunk Enterprise et Sysmon. Ce projet est également conçu comme un tutoriel pas à pas pour toute personne souhaitant reproduire ce lab dans son propre environnement.
 
 <div align="center">
 
