@@ -4,6 +4,9 @@
 
 > **Résumé :** Un laboratoire de détection complet simulant les techniques MITRE ATT&CK (T1547) et concevant des règles de détection à l'aide de Splunk Enterprise et Sysmon.
 
+[![Statut](https://img.shields.io/badge/Statut-EN_COURS-e8a030?style=flat-square)]()
+[![Phase](https://img.shields.io/badge/Phase_actuelle-2/3_Blue_Team-4a9eff?style=flat-square)]()
+
 ## Architecture
 | Composant | Technologie | Rôle |
 |-----------|------------|------|
@@ -201,7 +204,7 @@ Félicitations! À ce stade, votre machine est "contaminée"! . Au prochain red�
 > **Attendez quelques secondes** avant de passer à la Phase 2 pour que l'Universal Forwarder envoie les logs Sysmon vers Splunk Enterprise.
 
 
-### Phase 2 – Détection et investigation dans Splunk (Blue Team)
+### 🚧 En cours — Phase 2 Blue Team
 
 #### Contexte
 J'endosse maintenant le rôle d'analyste SOC. Les attaques ont eu lieu sur la machine Windows 11. Les données arrivent dans Splunk via Sysmon (Universal Forwarder). Nous allons maintenant **détecter et analyser** ces deux tentatives de persistance.
@@ -211,3 +214,5 @@ On ouvre maintenant Splunk Enterprise et **on lance cette recherche** (période 
 ```spl
 index=sysmon EventCode=13 TargetObject="*\\CurrentVersion\\Run\\*"
 ```
+> La détection et l'investigation Splunk sont en cours de finalisation.
+> Le lab sera complété après la recréation des VMs suite à un problème de configuration.
