@@ -4,8 +4,12 @@
 
 > **Résumé :** Un laboratoire de détection complet simulant les techniques MITRE ATT&CK (T1547) et concevant des règles de détection à l'aide de Splunk Enterprise et Sysmon.
 
+<div align="center">
+
 [![Statut](https://img.shields.io/badge/Statut-EN_COURS-e8a030?style=flat-square)]()
 [![Phase](https://img.shields.io/badge/Phase_actuelle-2/3_Blue_Team-4a9eff?style=flat-square)]()
+
+</div>
 
 ## Architecture
 | Composant | Technologie | Rôle |
