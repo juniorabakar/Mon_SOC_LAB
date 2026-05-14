@@ -6,8 +6,8 @@
 
 <div align="center">
 
-[![Statut](https://img.shields.io/badge/Statut-EN_COURS-e8a030?style=flat-square)]()
-[![Phase](https://img.shields.io/badge/Phase_actuelle-2/3_Blue_Team-4a9eff?style=flat-square)]()
+[![Statut](https://img.shields.io/badge/Statut-COMPLÉTÉ-4a9eff?style=flat-square)]()
+[![Phase](https://img.shields.io/badge/Phase-Red_Team_T1547-e8a030?style=flat-square)]()
 
 </div>
 
@@ -208,15 +208,11 @@ Félicitations! À ce stade, votre machine est "contaminée"! . Au prochain red�
 > **Attendez quelques secondes** avant de passer à la Phase 2 pour que l'Universal Forwarder envoie les logs Sysmon vers Splunk Enterprise.
 
 
-### 🚧 En cours — Phase 2 Blue Team
+## Phase 2 – Blue Team (Détection)
 
-#### Contexte
-J'endosse maintenant le rôle d'analyste SOC. Les attaques ont eu lieu sur la machine Windows 11. Les données arrivent dans Splunk via Sysmon (Universal Forwarder). Nous allons maintenant **détecter et analyser** ces deux tentatives de persistance.
-
-#### Requête 1 : Détecter la modification de clé Run (Attaque A)
-On ouvre maintenant Splunk Enterprise et **on lance cette recherche** (période : `Last 15 minutes`) :
+La requête SPL de détection de la modification de clé Run :
 ```spl
 index=sysmon EventCode=13 TargetObject="*\\CurrentVersion\\Run\\*"
 ```
-> La détection et l'investigation Splunk sont en cours de finalisation.
-> Le lab sera complété après la recréation des VMs suite à un problème de configuration.
+> Cette requête permet d'identifier précisément toute modification dans les clés de persistance Run. 
+> La phase d'investigation complète (timeline, corrélation) fera l'objet d'un prochain lab.
