@@ -208,7 +208,7 @@ Félicitations! À ce stade, votre machine est "contaminée"! . Au prochain red�
 > **Attendez quelques secondes** avant de passer à la Phase 2 pour que l'Universal Forwarder envoie les logs Sysmon vers Splunk Enterprise.
 
 
-## Phase 2 – Blue Team (Détection)
+### Phase 2 – Blue Team (Détection)
 
 La requête SPL de détection de la modification de clé Run :
 ```spl
